@@ -9,11 +9,13 @@ class CustomerController extends Controller
 {
     public function index()
     {
+        $query = Customer::query();
+
         if (!auth()->user()->isAdmin()) {
-            $customers = Customer::where('user_id', auth()->id())->paginate(10);
-        } else {
-            $customers = Customer::paginate(10);
+            $query->where('user_id', auth()->id());
         }
+
+        $customers = $query->paginate(10);
 
         return view('customers.index', compact('customers'));
     }
@@ -25,47 +27,67 @@ class CustomerController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'email' => 'required|email|unique:customers,email',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-        ]);
-
+        $validated = $this->validateCustomer($request);
         $validated['user_id'] = auth()->id();
+
         Customer::create($validated);
 
-
-        return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
+        return redirect()->route('customers.index')
+            ->with('success', 'Customer created successfully.');
     }
 
     public function show(Customer $customer)
     {
+        $this->authorizeAccess($customer);
         return view('customers.show', compact('customer'));
     }
 
     public function edit(Customer $customer)
     {
+        $this->authorizeAccess($customer);
         return view('customers.edit', compact('customer'));
     }
 
     public function update(Request $request, Customer $customer)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'email' => 'required|email|unique:customers,email,' . $customer->id,
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string',
-        ]);
+        $this->authorizeAccess($customer);
 
+        $validated = $this->validateCustomer($request, $customer->id);
         $customer->update($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
+        return redirect()->route('customers.index')
+            ->with('success', 'Customer updated successfully.');
     }
 
     public function destroy(Customer $customer)
     {
+        $this->authorizeAccess($customer);
         $customer->delete();
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+
+        return redirect()->route('customers.index')
+            ->with('success', 'Customer deleted successfully.');
+    }
+
+    /**
+     * Validation rules
+     */
+    protected function validateCustomer(Request $request, $ignoreId = null)
+    {
+        return $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|unique:customers,email,' . $ignoreId,
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+        ]);
+    }
+
+    /**
+     * Authorize user access
+     */
+    protected function authorizeAccess(Customer $customer)
+    {
+        if (!auth()->user()->isAdmin() && $customer->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized action.');
+        }
     }
 }
