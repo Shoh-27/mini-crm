@@ -9,7 +9,12 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::latest()->paginate(10);
+        if (!auth()->user()->isAdmin()) {
+            $customers = Customer::where('user_id', auth()->id())->paginate(10);
+        } else {
+            $customers = Customer::paginate(10);
+        }
+
         return view('customers.index', compact('customers'));
     }
 
