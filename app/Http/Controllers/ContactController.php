@@ -2,63 +2,58 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Customer $customer)
     {
-        //
+        $contacts = $customer->contacts()->latest()->get();
+        return view('contacts.index', compact('customer', 'contacts'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(Customer $customer)
     {
-        //
+        return view('contacts.create', compact('customer'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request, Customer $customer)
     {
-        //
+        $validated = $request->validate([
+            'type' => 'required|string|max:100',
+            'notes' => 'nullable|string',
+        ]);
+
+        $customer->contacts()->create($validated);
+
+        return redirect()->route('customers.contacts.index', $customer)
+            ->with('success', 'Contact added successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function edit(Customer $customer, Contact $contact)
     {
-        //
+        return view('contacts.edit', compact('customer', 'contact'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function update(Request $request, Customer $customer, Contact $contact)
     {
-        //
+        $validated = $request->validate([
+            'type' => 'required|string|max:100',
+            'notes' => 'nullable|string',
+        ]);
+
+        $contact->update($validated);
+
+        return redirect()->route('customers.contacts.index', $customer)
+            ->with('success', 'Contact updated successfully.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function destroy(Customer $customer, Contact $contact)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $contact->delete();
+        return redirect()->route('customers.contacts.index', $customer)
+            ->with('success', 'Contact deleted successfully.');
     }
 }
