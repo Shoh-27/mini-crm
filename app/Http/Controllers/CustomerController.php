@@ -32,7 +32,9 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
         ]);
 
+        $validated['user_id'] = auth()->id();
         Customer::create($validated);
+
 
         return redirect()->route('customers.index')->with('success', 'Customer created successfully.');
     }
