@@ -21,7 +21,7 @@ Loyha orqali mijozlar, ularning kontaktlari va ularga bog‘liq vazifalarni bosh
 ## ⚙️ O‘rnatish
 1. Loyhani clone qiling:
    ```bash
-   git clone https://github.com/USERNAME/REPO.git
+   git clone https://github.com/Shoh-27/mini-crm.git
    cd REPO
 ## Composer orqali dependency’larni o‘rnating:
 
